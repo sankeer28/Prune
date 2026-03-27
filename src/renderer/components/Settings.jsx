@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Check } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import './Settings.css'
 
 const MODELS = [
@@ -13,7 +13,7 @@ const MODELS = [
   { id: 'llama3.2-vision:11b', label: 'llama3.2-vision:11b', size: '7.8 GB', note: 'Best all-round · 128K context' },
 ]
 
-export default function Settings({ settings, onSave, onClose }) {
+export default function Settings({ settings, onSave, onClose, asPage = false }) {
   const [local, setLocal] = useState({ ...settings })
   const [ollamaModels, setOllamaModels] = useState([])
 
@@ -33,62 +33,91 @@ export default function Settings({ settings, onSave, onClose }) {
     onClose()
   }
 
+  const settingsBody = (
+    <>
+      <div className="settings-section">
+        <label className="settings-label">Vision Model</label>
+        <div className="model-list">
+          {MODELS.map(m => (
+            <div
+              key={m.id}
+              className={`model-option ${local.model === m.id ? 'active' : ''}`}
+              onClick={() => setLocal(l => ({ ...l, model: m.id }))}
+            >
+              <div className="model-name">{m.label}</div>
+              <div className="model-meta">{m.size} · {m.note}</div>
+              {ollamaModels.includes(m.id) && <span className="model-installed"><Check size={11} style={{verticalAlign:'middle', marginRight:3}} />installed</span>}
+            </div>
+          ))}
+        </div>
+        {ollamaModels.length > 0 && (
+          <p className="settings-hint">Installed Ollama models: {ollamaModels.join(', ')}</p>
+        )}
+      </div>
+
+      <div className="settings-section">
+        <label className="settings-label">AI Strictness</label>
+        <div className="radio-group">
+          {['conservative', 'balanced', 'aggressive'].map(s => (
+            <label key={s} className={`radio-opt ${local.strictness === s ? 'active' : ''}`}>
+              <input
+                type="radio"
+                name="strictness"
+                value={s}
+                checked={local.strictness === s}
+                onChange={() => setLocal(l => ({ ...l, strictness: s }))}
+              />
+              <span>{s.charAt(0).toUpperCase() + s.slice(1)}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="settings-section">
+        <label className="settings-label">Display</label>
+        <label className="toggle-row">
+          <input
+            type="checkbox"
+            checked={local.showAiOverlay}
+            onChange={e => setLocal(l => ({ ...l, showAiOverlay: e.target.checked }))}
+          />
+          <span className="toggle-label">Show AI overlay during review</span>
+        </label>
+        <p className="settings-hint">Turn off for unbiased review</p>
+      </div>
+    </>
+  )
+
+  if (asPage) {
+    return (
+      <div className="settings-page">
+        <div className="settings-page-head settings-page-shell">
+          <button className="btn btn-ghost settings-back-btn" onClick={onClose}>
+            <ArrowLeft size={14} /> Back
+          </button>
+          <div className="settings-page-title-wrap">
+            <div className="settings-page-title">Settings</div>
+            <div className="settings-page-subtitle">Adjust model and review behavior</div>
+          </div>
+        </div>
+        <div className="settings-content settings-content-page settings-page-shell">
+          {settingsBody}
+        </div>
+        <div className="settings-footer settings-footer-page settings-page-shell">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSave}>Save</button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal settings-modal">
         <div className="modal-title">Settings</div>
-
-        <div className="settings-section">
-          <label className="settings-label">Vision Model</label>
-          <div className="model-list">
-            {MODELS.map(m => (
-              <div
-                key={m.id}
-                className={`model-option ${local.model === m.id ? 'active' : ''}`}
-                onClick={() => setLocal(l => ({ ...l, model: m.id }))}
-              >
-                <div className="model-name">{m.label}</div>
-                <div className="model-meta">{m.size} · {m.note}</div>
-                {ollamaModels.includes(m.id) && <span className="model-installed"><Check size={11} style={{verticalAlign:'middle', marginRight:3}} />installed</span>}
-              </div>
-            ))}
-          </div>
-          {ollamaModels.length > 0 && (
-            <p className="settings-hint">Installed Ollama models: {ollamaModels.join(', ')}</p>
-          )}
+        <div className="settings-content">
+          {settingsBody}
         </div>
-
-        <div className="settings-section">
-          <label className="settings-label">AI Strictness</label>
-          <div className="radio-group">
-            {['conservative', 'balanced', 'aggressive'].map(s => (
-              <label key={s} className={`radio-opt ${local.strictness === s ? 'active' : ''}`}>
-                <input
-                  type="radio"
-                  name="strictness"
-                  value={s}
-                  checked={local.strictness === s}
-                  onChange={() => setLocal(l => ({ ...l, strictness: s }))}
-                />
-                <span>{s.charAt(0).toUpperCase() + s.slice(1)}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="settings-section">
-          <label className="settings-label">Display</label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={local.showAiOverlay}
-              onChange={e => setLocal(l => ({ ...l, showAiOverlay: e.target.checked }))}
-            />
-            <span className="toggle-label">Show AI overlay during review</span>
-          </label>
-          <p className="settings-hint">Turn off for unbiased review</p>
-        </div>
-
         <div className="settings-footer">
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" onClick={handleSave}>Save</button>

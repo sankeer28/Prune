@@ -9,7 +9,7 @@ import './App.css'
 
 export default function App() {
   const [screen, setScreen] = useState('setup') // setup | review | final
-  const [showSettings, setShowSettings] = useState(false)
+  const [settingsReturnScreen, setSettingsReturnScreen] = useState('setup')
   const [photos, setPhotos] = useState([])
   const [folderPath, setFolderPath] = useState(null)
   const [settings, setSettings] = useState({
@@ -46,6 +46,23 @@ export default function App() {
     await window.electronAPI?.saveSettings(newSettings)
   }
 
+  const openSettings = () => {
+    setSettingsReturnScreen(screen)
+    setScreen('settings')
+  }
+
+  const closeSettings = () => {
+    setScreen(settingsReturnScreen === 'settings' ? 'setup' : settingsReturnScreen)
+  }
+
+  const handleSettingsIconClick = () => {
+    if (screen === 'settings') {
+      closeSettings()
+      return
+    }
+    openSettings()
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -56,7 +73,7 @@ export default function App() {
           </span>
           {screen !== 'setup' && (
             <span className="app-breadcrumb">
-              {screen === 'review' ? 'Reviewing' : 'Final Review'}
+              {screen === 'review' ? 'Reviewing' : screen === 'final' ? 'Final Review' : 'Settings'}
             </span>
           )}
         </div>
@@ -64,8 +81,8 @@ export default function App() {
           <OllamaStatus />
           <button
             className="icon-btn"
-            onClick={() => setShowSettings(true)}
-            title="Settings"
+            onClick={handleSettingsIconClick}
+            title={screen === 'settings' ? 'Back' : 'Settings'}
           >
             <Settings2 size={20} />
           </button>
@@ -94,15 +111,15 @@ export default function App() {
             onDone={handleDeletionDone}
           />
         )}
+        {screen === 'settings' && (
+          <Settings
+            settings={settings}
+            onSave={handleSaveSettings}
+            onClose={closeSettings}
+            asPage
+          />
+        )}
       </main>
-
-      {showSettings && (
-        <Settings
-          settings={settings}
-          onSave={handleSaveSettings}
-          onClose={() => setShowSettings(false)}
-        />
-      )}
     </div>
   )
 }

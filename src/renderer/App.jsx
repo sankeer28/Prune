@@ -6,6 +6,7 @@ import Settings from './components/Settings.jsx'
 import OllamaStatus from './components/OllamaStatus.jsx'
 import { Settings2 } from 'lucide-react'
 import './App.css'
+import iconUrl from '../../assets/icon.svg'
 
 export default function App() {
   const [screen, setScreen] = useState('setup') // setup | review | final
@@ -68,7 +69,7 @@ export default function App() {
       <header className="app-header">
         <div className="app-header-left">
           <span className="app-logo">
-            <img src="/assets/icon.svg" alt="" className="app-logo-icon" />
+            <img src={iconUrl} alt="" className="app-logo-icon" />
             <span>Prune</span>
           </span>
           {screen !== 'setup' && (

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
     "build": "vite build && electron-builder",
+    "postinstall": "electron-rebuild",
     "vite": "vite",
     "electron": "cross-env NODE_ENV=development electron .",
     "preview": "vite preview"
@@ -19,6 +20,7 @@
     "cross-env": "^10.1.0",
     "electron": "^34.0.0",
     "electron-builder": "^25.1.8",
+    "electron-rebuild": "^3.2.9",
     "vite": "^6.0.7",
     "wait-on": "^8.0.1"
   },
@@ -40,6 +42,13 @@
       "dist/**/*",
       "src/main/**/*",
       "assets/**/*"
+    ],
+    "asarUnpack": [
+      "**/*.node",
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*",
+      "node_modules/appium-ios-device/**/*",
+      "node_modules/node-usbmux/**/*"
     ],
     "win": {
       "target": "nsis",

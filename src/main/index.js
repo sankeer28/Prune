@@ -4,6 +4,11 @@ const fs = require('fs')
 const os = require('os')
 const { spawn } = require('child_process')
 
+// appium-ios-device is CJS — require() is fully ASAR-patched; import() is not
+let _afc = null
+try { _afc = require('appium-ios-device') } catch (e) { console.error('appium-ios-device load failed:', e.message) }
+const getAfc = () => _afc
+
 // Handle electron-store as ESM module
 let Store
 async function getStore() {
@@ -330,7 +335,7 @@ ipcMain.handle('list-all-storage', async () => {
 
   // iPhone via appium-ios-device (AFC protocol over usbmux)
   try {
-    const { utilities } = await import('appium-ios-device')
+    const { utilities } = getAfc()
     const udids = await utilities.getConnectedDevices()
     for (const udid of udids) {
       let name = 'Apple iPhone'
@@ -480,7 +485,7 @@ async function afcListPhotos(afc, dir = '/DCIM') {
 ipcMain.handle('list-wia-photos', async (_, udid) => {
   let afc
   try {
-    const { services } = await import('appium-ios-device')
+    const { services } = getAfc()
     console.log('AFC: connecting to', udid)
     afc = await services.startAfcService(udid)
     console.log('AFC: connected, listing root /')
@@ -551,7 +556,7 @@ async function runWorker(udid, worker) {
   worker.busy = true
   try {
     if (!worker.afc) {
-      const { services } = await import('appium-ios-device')
+      const { services } = getAfc()
       worker.afc = await services.startAfcService(udid)
     }
     while (pool.pending.length > 0) {
@@ -630,7 +635,7 @@ ipcMain.handle('import-selected-wia', async (_, { deviceId: udid, selectedNames,
   let afc
   try {
     if (!fs.existsSync(destPath)) fs.mkdirSync(destPath, { recursive: true })
-    const { services } = await import('appium-ios-device')
+    const { services } = getAfc()
     afc = await services.startAfcService(udid)
 
     const total = selectedNames.length

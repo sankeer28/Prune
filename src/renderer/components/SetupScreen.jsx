@@ -588,7 +588,6 @@ export default function SetupScreen({ settings, onComplete }) {
     <div className="setup">
       <div className="setup-center">
         <h1 className="setup-title">
-          <img src="/assets/icon.svg" alt="" style={{ width: 48, height: 48, verticalAlign: 'middle', marginRight: 10 }} />
           Prune
         </h1>
         <p className="setup-subtitle">AI-powered photo culling. Keep the best, delete the rest.</p>

@@ -50,7 +50,10 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="app-header-left">
-          <span className="app-logo">Prune</span>
+          <span className="app-logo">
+            <img src="/assets/icon.svg" alt="" className="app-logo-icon" />
+            <span>Prune</span>
+          </span>
           {screen !== 'setup' && (
             <span className="app-breadcrumb">
               {screen === 'review' ? 'Reviewing' : 'Final Review'}

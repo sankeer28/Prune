@@ -29,12 +29,21 @@
 }
 
 .app-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: 'Instrument Serif', Georgia, serif;
   font-size: 17px;
   font-weight: 400;
   font-style: italic;
   color: var(--text);
   letter-spacing: 0.2px;
+}
+
+.app-logo-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .app-breadcrumb {

@@ -83,25 +83,35 @@
 /* ── Tabs ── */
 .tab-bar {
   display: flex;
-  border-bottom: 1px solid var(--border);
+  gap: 6px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
 }
 
 .tab-btn {
   flex: 1;
-  padding: 10px 14px;
+  min-height: 42px;
+  padding: 9px 12px;
   font-size: 13px;
-  font-weight: 500;
-  background: none;
+  font-weight: 600;
+  background: transparent;
   color: var(--text3);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.12s, border-color 0.12s;
-  letter-spacing: -0.1px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  letter-spacing: 0;
 }
-.tab-btn:hover { color: var(--text2); }
+.tab-btn:hover {
+  color: var(--text2);
+  background: var(--bg4);
+  border-color: var(--border-mid);
+}
 .tab-btn.active {
   color: var(--text);
-  border-bottom-color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
 }
 
 /* ── Card ── */

@@ -12,7 +12,15 @@ export default function PhotoCard({ photo, decision, showOverlay, onSwipe }) {
     if (!photo) return
     setLoaded(false)
     setErrored(false)
-    setImgSrc(`file://${photo.path.replace(/\\/g, '/')}`)
+    const ext = photo.path.split('.').pop().toLowerCase()
+    if (ext === 'heic' || ext === 'heif') {
+      window.electronAPI?.readImageBase64(photo.path).then(b64 => {
+        if (b64) setImgSrc(`data:image/jpeg;base64,${b64}`)
+        else setErrored(true)
+      })
+    } else {
+      setImgSrc(`file://${photo.path.replace(/\\/g, '/')}`)
+    }
   }, [photo])
 
   if (!photo) return null

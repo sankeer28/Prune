@@ -1,6 +1,21 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { CheckCircle, Trash2, Check } from 'lucide-react'
 import './FinalReview.css'
+
+function HeicSafeImg({ path, alt, className }) {
+  const [src, setSrc] = useState(null)
+  useEffect(() => {
+    const ext = path.split('.').pop().toLowerCase()
+    if (ext === 'heic' || ext === 'heif') {
+      window.electronAPI?.readImageBase64(path).then(b64 => {
+        if (b64) setSrc(`data:image/jpeg;base64,${b64}`)
+      })
+    } else {
+      setSrc(`file://${path.replace(/\\/g, '/')}`)
+    }
+  }, [path])
+  return src ? <img src={src} alt={alt} className={className} /> : null
+}
 
 function formatBytes(bytes) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB'
@@ -91,7 +106,6 @@ export default function FinalReview({ photos, folderPath, onDone }) {
           <div className="final-grid">
             {toDelete.map(photo => {
               const isRescued = rescued.has(photo.name)
-              const imgSrc = `file://${photo.path.replace(/\\/g, '/')}`
               return (
                 <div
                   key={photo.name}
@@ -100,7 +114,7 @@ export default function FinalReview({ photos, folderPath, onDone }) {
                   title={isRescued ? 'Click to re-mark for deletion' : 'Click to rescue'}
                 >
                   <div className="final-thumb-img-wrap">
-                    <img src={imgSrc} alt={photo.name} className="final-thumb-img" />
+                    <HeicSafeImg path={photo.path} alt={photo.name} className="final-thumb-img" />
                     {isRescued && <div className="rescued-overlay"><Check size={12} style={{verticalAlign:'middle', marginRight:3}} />Rescued</div>}
                   </div>
                   <div className="final-thumb-info">

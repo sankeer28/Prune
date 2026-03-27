@@ -26,18 +26,23 @@
     "appium-ios-device": "^3.1.10",
     "electron-store": "^10.0.0",
     "framer-motion": "^12.4.7",
+    "heic-convert": "^2.1.0",
+    "lucide-react": "^1.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "build": {
     "appId": "com.prune.app",
     "productName": "Prune",
+    "icon": "assets/icon",
     "files": [
       "dist/**/*",
-      "src/main/**/*"
+      "src/main/**/*",
+      "assets/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/icon.ico"
     },
     "mac": {
       "target": "dmg"

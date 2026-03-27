@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { Image as ImageIcon, ArrowLeft, Check, ArrowRight } from 'lucide-react'
 import './WiaPhotoSelect.css'
 
 function formatBytes(bytes) {
@@ -44,7 +45,7 @@ function ThumbImg({ udid, photo }) {
     <div ref={ref} className="wia-thumb">
       {src
         ? <img src={src} alt={photo.name} className="wia-thumb-img" />
-        : <div className="wia-thumb-placeholder">🖼</div>
+        : <div className="wia-thumb-placeholder"><ImageIcon size={22} strokeWidth={1.5} /></div>
       }
     </div>
   )
@@ -136,7 +137,7 @@ export default function WiaPhotoSelect({ deviceId, onConfirm, onCancel }) {
           {selected.size} of {photos.length} selected
           {totalSelectedBytes > 0 && ` · ${formatBytes(totalSelectedBytes)}`}
         </span>
-        <button className="btn btn-ghost wia-back-btn" onClick={onCancel}>← Back</button>
+        <button className="btn btn-ghost wia-back-btn" onClick={onCancel}><ArrowLeft size={14} style={{verticalAlign:'middle', marginRight:4}} />Back</button>
       </div>
 
       <div className="wia-grid">
@@ -148,7 +149,7 @@ export default function WiaPhotoSelect({ deviceId, onConfirm, onCancel }) {
               className={`wia-item ${isSelected ? 'selected' : ''}`}
               onClick={() => toggle(photo)}
             >
-              <div className="wia-item-check">{isSelected ? '✓' : ''}</div>
+              <div className="wia-item-check">{isSelected ? <Check size={10} /> : ''}</div>
               <ThumbImg udid={deviceId} photo={photo} />
               <div className="wia-item-name">{photo.name}</div>
               <div className="wia-item-meta">
@@ -165,7 +166,7 @@ export default function WiaPhotoSelect({ deviceId, onConfirm, onCancel }) {
           onClick={() => onConfirm([...selected])}
           disabled={selected.size === 0}
         >
-          Import {selected.size} photo{selected.size !== 1 ? 's' : ''} →
+          Import {selected.size} photo{selected.size !== 1 ? 's' : ''} <ArrowRight size={15} style={{verticalAlign:'middle', marginLeft:4}} />
         </button>
       </div>
     </div>

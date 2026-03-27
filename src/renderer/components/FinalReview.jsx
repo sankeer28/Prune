@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { CheckCircle, Trash2, Check } from 'lucide-react'
 import './FinalReview.css'
 
 function formatBytes(bytes) {
@@ -61,7 +62,7 @@ export default function FinalReview({ photos, folderPath, onDone }) {
     return (
       <div className="final-done">
         <div className="final-done-card">
-          <div style={{ fontSize: 48 }}>✓</div>
+          <CheckCircle size={56} color="#4ade80" />
           <h2>{finalDelete.length} photos deleted</h2>
           <p className="final-done-sub">{formatBytes(totalBytes)} freed • deletion_log.json saved</p>
           <button className="btn btn-primary" onClick={onDone}>Start New Session</button>
@@ -100,7 +101,7 @@ export default function FinalReview({ photos, folderPath, onDone }) {
                 >
                   <div className="final-thumb-img-wrap">
                     <img src={imgSrc} alt={photo.name} className="final-thumb-img" />
-                    {isRescued && <div className="rescued-overlay">✓ Rescued</div>}
+                    {isRescued && <div className="rescued-overlay"><Check size={12} style={{verticalAlign:'middle', marginRight:3}} />Rescued</div>}
                   </div>
                   <div className="final-thumb-info">
                     <span className="final-thumb-name">{photo.name}</span>
@@ -123,7 +124,7 @@ export default function FinalReview({ photos, folderPath, onDone }) {
                   onClick={() => { setMode('trash'); execute() }}
                   disabled={status === 'running'}
                 >
-                  🗑 Move {finalDelete.length} photo{finalDelete.length !== 1 ? 's' : ''} to Trash
+                  <Trash2 size={15} style={{verticalAlign:'middle', marginRight:6}} />Move {finalDelete.length} photo{finalDelete.length !== 1 ? 's' : ''} to Trash
                 </button>
               </div>
             )}

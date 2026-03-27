@@ -1,4 +1,5 @@
 import React from 'react'
+import { Trash2, Heart, SkipForward, ArrowLeft } from 'lucide-react'
 import './Sidebar.css'
 
 function formatBytes(bytes) {
@@ -49,15 +50,15 @@ export default function Sidebar({ photos, decisions, onCancel }) {
       <div className="sidebar-section">
         <h3 className="sidebar-heading">Decisions</h3>
         <div className="sidebar-decision-row delete">
-          <span>🔴 Delete</span>
+          <span><Trash2 size={13} style={{verticalAlign:'middle', marginRight:6}} />Delete</span>
           <span className="sidebar-badge delete">{deleteCount}</span>
         </div>
         <div className="sidebar-decision-row keep">
-          <span>🟢 Keep</span>
+          <span><Heart size={13} style={{verticalAlign:'middle', marginRight:6}} />Keep</span>
           <span className="sidebar-badge keep">{keepCount}</span>
         </div>
         <div className="sidebar-decision-row skip">
-          <span>⚪ Skip</span>
+          <span><SkipForward size={13} style={{verticalAlign:'middle', marginRight:6}} />Skip</span>
           <span className="sidebar-badge">{skipCount}</span>
         </div>
       </div>
@@ -88,7 +89,7 @@ export default function Sidebar({ photos, decisions, onCancel }) {
       )}
       <div className="sidebar-footer">
         <button className="sidebar-back-btn" onClick={onCancel}>
-          ← Back to Home
+          <ArrowLeft size={14} style={{verticalAlign:'middle', marginRight:6}} />Back to Home
         </button>
       </div>
     </div>

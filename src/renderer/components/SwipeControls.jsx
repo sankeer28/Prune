@@ -1,4 +1,5 @@
 import React from 'react'
+import { Undo2, X, SkipForward, Check } from 'lucide-react'
 import './SwipeControls.css'
 
 export default function SwipeControls({ onDelete, onKeep, onSkip, onUndo, current, total }) {
@@ -10,22 +11,22 @@ export default function SwipeControls({ onDelete, onKeep, onSkip, onUndo, curren
 
       <div className="swipe-buttons">
         <button className="swipe-btn swipe-undo" onClick={onUndo} title="Undo (Z)">
-          <span>↩</span>
+          <Undo2 size={20} />
           <span className="swipe-label">Undo</span>
         </button>
 
         <button className="swipe-btn swipe-delete" onClick={onDelete} title="Delete (← or A)">
-          <span>✕</span>
+          <X size={20} />
           <span className="swipe-label">Delete</span>
         </button>
 
         <button className="swipe-btn swipe-skip" onClick={onSkip} title="Skip (Space)">
-          <span>→</span>
+          <SkipForward size={20} />
           <span className="swipe-label">Skip</span>
         </button>
 
         <button className="swipe-btn swipe-keep" onClick={onKeep} title="Keep (→ or D)">
-          <span>✓</span>
+          <Check size={20} />
           <span className="swipe-label">Keep</span>
         </button>
       </div>

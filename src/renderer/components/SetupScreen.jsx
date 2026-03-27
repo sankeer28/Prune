@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { analyzePhoto } from '../../utils/analyzePhoto.js'
 import WiaPhotoSelect from './WiaPhotoSelect.jsx'
+import { Smartphone, HardDrive, AlertTriangle, Camera, Check, Folder, RefreshCw, ArrowRight } from 'lucide-react'
 import './SetupScreen.css'
 
 function formatBytes(bytes) {
@@ -128,11 +129,9 @@ function ImportTab({ onImported }) {
           <span className="import-step-num">1</span>
           <span>Select your device</span>
           <button className="link-btn" onClick={scan} disabled={scanning} style={{ marginLeft: 'auto' }}>
-            {scanning ? 'Scanning...' : '↻ Refresh'}
+            {scanning ? <><div className="import-spinner import-spinner-sm" style={{display:'inline-block', marginRight:6, verticalAlign:'middle'}} />Scanning</> : <><RefreshCw size={13} style={{verticalAlign:'middle', marginRight:4}} />Refresh</>}
           </button>
         </div>
-
-        {scanning && <p className="import-hint">Scanning for connected devices...</p>}
 
         {!scanning && devices.length === 0 && (
           <div className="import-empty-devices">
@@ -147,7 +146,7 @@ function ImportTab({ onImported }) {
         {!scanning && devices.length > 0 && (
           <div className="device-list">
             {devices.map((d, i) => {
-              const icon = d.type === 'iphone' ? '📱' : d.type === 'mtp' ? '📱' : d.type === 'pnp-only' ? '⚠️' : '💾'
+              const icon = d.type === 'iphone' ? <Smartphone size={18} /> : d.type === 'mtp' ? <Smartphone size={18} /> : d.type === 'pnp-only' ? <AlertTriangle size={18} /> : <HardDrive size={18} />
               const sub  = d.type === 'iphone' ? 'iPhone — ready to import' :
                            d.type === 'mtp' ? 'Android / MTP' :
                            d.type === 'pnp-only' ? 'Unlock phone & tap Trust, then Refresh' :
@@ -180,7 +179,12 @@ function ImportTab({ onImported }) {
             <span>Select photo folder</span>
           </div>
 
-          {browsingFolders && <p className="import-hint">Scanning device for photo folders...</p>}
+          {browsingFolders && (
+            <div className="import-scanning">
+              <div className="import-spinner" />
+              <span>Scanning for photo folders...</span>
+            </div>
+          )}
 
           {!browsingFolders && photoFolders !== null && (
             <>
@@ -192,7 +196,7 @@ function ImportTab({ onImported }) {
                       className={`folder-pick-btn ${sourceFolder === f.path ? 'active' : ''}`}
                       onClick={() => setSourceFolder(f.path)}
                     >
-                      📷 {f.name}
+                      <Camera size={13} style={{verticalAlign:'middle', marginRight:6}} />{f.name}
                     </button>
                   ))}
                 </div>
@@ -203,7 +207,7 @@ function ImportTab({ onImported }) {
               )}
 
               <button className="btn btn-ghost" onClick={handleBrowseSource} style={{ fontSize: 13 }}>
-                {sourceFolder ? `✓ ${sourceFolder}` : 'Browse to folder...'}
+                {sourceFolder ? <><Check size={13} style={{verticalAlign:'middle', marginRight:4}} />{sourceFolder}</> : 'Browse to folder...'}
               </button>
             </>
           )}
@@ -231,7 +235,7 @@ function ImportTab({ onImported }) {
             <span>Copy photos to</span>
           </div>
           <button className="btn btn-ghost" onClick={handleBrowseDest} style={{ fontSize: 13 }}>
-            {destFolder ? `✓ ${destFolder}` : 'Choose destination folder...'}
+            {destFolder ? <><Check size={13} style={{verticalAlign:'middle', marginRight:4}} />{destFolder}</> : 'Choose destination folder...'}
           </button>
         </div>
       )}
@@ -253,7 +257,7 @@ function ImportTab({ onImported }) {
             </div>
           ) : (
             <button className="btn btn-primary" onClick={handleImport}>
-              Import Photos →
+              Import Photos <ArrowRight size={15} style={{verticalAlign:'middle', marginLeft:4}} />
             </button>
           )}
 
@@ -387,12 +391,15 @@ export default function SetupScreen({ settings, onComplete }) {
   return (
     <div className="setup">
       <div className="setup-center">
-        <h1 className="setup-title">Prune</h1>
+        <h1 className="setup-title">
+          <img src="/assets/icon.svg" alt="" style={{ width: 48, height: 48, verticalAlign: 'middle', marginRight: 10 }} />
+          Prune
+        </h1>
         <p className="setup-subtitle">AI-powered photo culling. Keep the best, delete the rest.</p>
 
         {!ollamaOk && (
           <div className="warning-banner">
-            <span>⚠ Ollama not detected — make sure it's running</span>
+            <span><AlertTriangle size={14} style={{verticalAlign:'middle', marginRight:6}} />Ollama not detected — make sure it's running</span>
             <button onClick={() => window.electronAPI?.openExternal('https://ollama.com')} className="link-btn">
               ollama.com ↗
             </button>
@@ -410,9 +417,8 @@ export default function SetupScreen({ settings, onComplete }) {
 
         {pulling && (
           <div className="model-download-banner">
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+            <div style={{ fontSize: 13, marginBottom: 6 }}>
               <span>{pullStatus}</span>
-              {pullPct > 0 && <span>{pullPct}%</span>}
             </div>
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: (pullPct || 5) + '%', transition: 'width 0.4s' }} />
@@ -425,14 +431,14 @@ export default function SetupScreen({ settings, onComplete }) {
             Open Folder
           </button>
           <button className={`tab-btn ${activeTab === 'import' ? 'active' : ''}`} onClick={() => setActiveTab('import')}>
-            Import from Phone / Card
+            Import from Phone
           </button>
         </div>
 
         {activeTab === 'folder' && (
           <div className="setup-card">
             <button className="btn btn-ghost folder-btn" onClick={handleSelectFolder}>
-              <span>📁</span>
+              <Folder size={16} />
               {folder ? folder : 'Select Photo Folder'}
             </button>
 
@@ -466,10 +472,10 @@ export default function SetupScreen({ settings, onComplete }) {
             {!analyzing && photos.length > 0 && (
               <div className="setup-actions">
                 <button className="btn btn-primary" onClick={handleStartAnalysis} disabled={!ollamaOk || !modelReady || pulling}>
-                  {!ollamaOk ? '⚠ Ollama Offline' : !modelReady ? '⚠ Model not downloaded' : `Analyze with AI (${settings.model})`}
+                  {!ollamaOk ? <><AlertTriangle size={14} style={{verticalAlign:'middle', marginRight:4}} />Ollama Offline</> : !modelReady ? <><AlertTriangle size={14} style={{verticalAlign:'middle', marginRight:4}} />Model not downloaded</> : `Analyze with AI (${settings.model})`}
                 </button>
                 <button className="btn btn-ghost" onClick={handleSkipAnalysis}>
-                  Skip AI → Review manually
+                  Skip AI <ArrowRight size={14} style={{verticalAlign:'middle', marginLeft:4}} /> Review manually
                 </button>
               </div>
             )}

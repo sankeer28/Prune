@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, protocol } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, protocol, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const os = require('os')
@@ -23,12 +23,14 @@ async function createWindow() {
   const StoreClass = await getStore()
   store = new StoreClass()
 
+  const iconPath = path.join(__dirname, '../../assets/icon.png')
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1100,
     minHeight: 700,
     backgroundColor: '#0f0f0f',
+    icon: iconPath,
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -46,7 +48,10 @@ async function createWindow() {
   }
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  Menu.setApplicationMenu(null)
+  createWindow()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
@@ -97,10 +102,25 @@ ipcMain.handle('load-photos', async (_, folderPath) => {
   return photos
 })
 
+// ── HEIC conversion helper ────────────────────────────────────────────────────
+async function toJpegBuffer(buf, ext) {
+  if (ext === '.heic' || ext === '.heif') {
+    try {
+      const convert = (await import('heic-convert')).default
+      return Buffer.from(await convert({ buffer: buf, format: 'JPEG', quality: 0.85 }))
+    } catch (e) {
+      console.warn('heic-convert failed:', e.message)
+    }
+  }
+  return buf
+}
+
 // ── IPC: Read image as base64 ────────────────────────────────────────────────
 ipcMain.handle('read-image-base64', async (_, imagePath) => {
   try {
-    const data = fs.readFileSync(imagePath)
+    const ext = path.extname(imagePath).toLowerCase()
+    let data = fs.readFileSync(imagePath)
+    data = await toJpegBuffer(data, ext)
     return data.toString('base64')
   } catch (e) {
     return null
@@ -236,7 +256,7 @@ ipcMain.handle('list-all-storage', async () => {
         const info = await utilities.getDeviceInfo(udid)
         name = info.DeviceName || info.ProductType || 'Apple iPhone'
       } catch {}
-      add({ type: 'iphone', path: udid, label: `📱 ${name}` })
+      add({ type: 'iphone', path: udid, label: ` ${name}` })
     }
   } catch (e) {
     console.log('AFC/iPhone detect:', e.message)
@@ -454,7 +474,9 @@ async function drainAfc(udid) {
 // ── IPC: Get a single file from iPhone AFC as base64 (for thumbnails) ────────
 ipcMain.handle('get-afc-file-base64', async (_, { udid, remotePath }) => {
   try {
-    const buf = await afcRead(udid, remotePath)
+    let buf = await afcRead(udid, remotePath)
+    const ext = path.extname(remotePath).toLowerCase()
+    buf = await toJpegBuffer(buf, ext)
     return buf.toString('base64')
   } catch (e) {
     return null

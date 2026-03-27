@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react'
+import { Check } from 'lucide-react'
 import './Settings.css'
 
 const MODELS = [
-  { id: 'moondream2', label: 'moondream2', size: '~1.7 GB', note: 'Fast, lightweight' },
-  { id: 'llava-phi3', label: 'llava-phi3', size: '~2.9 GB', note: 'Balanced' },
-  { id: 'llava:7b',   label: 'llava:7b',   size: '~4.1 GB', note: 'Most accurate' }
+  { id: 'moondream',         label: 'moondream',            size: '1.7 GB',  note: 'Fastest · great for quick culling' },
+  { id: 'qwen2.5vl:3b',     label: 'qwen2.5vl:3b',         size: '3.2 GB',  note: 'Fast · very capable for size' },
+  { id: 'llava-phi3',        label: 'llava-phi3',           size: '2.9 GB',  note: 'Balanced speed & quality' },
+  { id: 'minicpm-v',         label: 'minicpm-v',            size: '5.5 GB',  note: 'High quality · supports hi-res' },
+  { id: 'llava:7b',          label: 'llava:7b',             size: '4.7 GB',  note: 'Solid all-rounder' },
+  { id: 'llava:13b',         label: 'llava:13b',            size: '8.0 GB',  note: 'Higher quality · needs 16 GB RAM' },
+  { id: 'qwen2.5vl:7b',     label: 'qwen2.5vl:7b',         size: '6.0 GB',  note: 'Excellent · beats GPT-4o-mini' },
+  { id: 'llama3.2-vision:11b', label: 'llama3.2-vision:11b', size: '7.8 GB', note: 'Best all-round · 128K context' },
 ]
 
 export default function Settings({ settings, onSave, onClose }) {
@@ -43,7 +49,7 @@ export default function Settings({ settings, onSave, onClose }) {
               >
                 <div className="model-name">{m.label}</div>
                 <div className="model-meta">{m.size} · {m.note}</div>
-                {ollamaModels.includes(m.id) && <span className="model-installed">✓ installed</span>}
+                {ollamaModels.includes(m.id) && <span className="model-installed"><Check size={11} style={{verticalAlign:'middle', marginRight:3}} />installed</span>}
               </div>
             ))}
           </div>

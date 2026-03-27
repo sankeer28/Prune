@@ -195,6 +195,34 @@
   gap: 8px;
 }
 
+.import-scanning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text2);
+  padding: 6px 0;
+}
+
+.import-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--bg4);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.import-spinner-sm {
+  width: 12px;
+  height: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .import-hint {
   font-size: 13px;
   color: var(--text2);

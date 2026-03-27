@@ -1,9 +1,9 @@
 import React from 'react'
 
 const CONFIG = {
-  keep:   { emoji: '🟢', label: 'KEEP',   color: '#4ade80', bg: 'rgba(74, 222, 128, 0.15)' },
-  delete: { emoji: '🔴', label: 'DELETE', color: '#f87171', bg: 'rgba(248, 113, 113, 0.15)' },
-  review: { emoji: '🟡', label: 'REVIEW', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)' }
+  keep:   { label: 'KEEP',   color: '#4ade80', bg: 'rgba(74, 222, 128, 0.15)' },
+  delete: { label: 'DELETE', color: '#f87171', bg: 'rgba(248, 113, 113, 0.15)' },
+  review: { label: 'REVIEW', color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.15)' }
 }
 
 export default function AnalysisBadge({ recommendation, reason, category, quality_score, visible }) {
@@ -33,7 +33,7 @@ export default function AnalysisBadge({ recommendation, reason, category, qualit
         padding: '5px 14px',
         backdropFilter: 'blur(8px)'
       }}>
-        <span style={{ fontSize: 12 }}>{cfg.emoji}</span>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.color, display: 'inline-block', flexShrink: 0 }} />
         <span style={{ fontSize: 12, fontWeight: 700, color: cfg.color, letterSpacing: 1 }}>{cfg.label}</span>
       </div>
 

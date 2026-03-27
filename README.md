@@ -25,15 +25,18 @@ npm run dev
 
 ## Models
 
-Prune works with any Ollama vision model. Recommended:
+Prune works with any Ollama vision model. If a model isn't installed, Prune will offer to download it automatically.
 
 | Model | Size | Notes |
 |---|---|---|
-| `moondream2` | ~1.7 GB | Fast, good for culling |
-| `llava-phi3` | ~2.9 GB | More accurate |
-| `llava:7b` | ~4.7 GB | Best quality, slower |
-
-If the model isn't installed, Prune will offer to download it automatically.
+| `moondream` | 1.7 GB | Fastest — great for quick culling |
+| `qwen2.5vl:3b` | 3.2 GB | Fast, very capable for its size |
+| `llava-phi3` | 2.9 GB | Balanced speed & quality |
+| `minicpm-v` | 5.5 GB | High quality, supports hi-res images |
+| `llava:7b` | 4.7 GB | Solid all-rounder |
+| `llava:13b` | 8.0 GB | Higher quality, needs 16 GB RAM |
+| `qwen2.5vl:7b` | 6.0 GB | Excellent — beats GPT-4o-mini on many tasks |
+| `llama3.2-vision:11b` | 7.8 GB | Best all-round, 128K context |
 
 ## iPhone Import
 

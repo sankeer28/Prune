@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { analyzePhoto } from '../../utils/analyzePhoto.js'
 import WiaPhotoSelect from './WiaPhotoSelect.jsx'
-import { Smartphone, HardDrive, AlertTriangle, Camera, Check, Folder, RefreshCw, ArrowRight, Image as ImageIcon, LayoutGrid, Expand, X } from 'lucide-react'
+import { Smartphone, HardDrive, AlertTriangle, Camera, Check, Folder, RefreshCw, ArrowRight, Image as ImageIcon, LayoutGrid, Expand, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react'
 import './SetupScreen.css'
 
 function formatBytes(bytes) {
@@ -9,6 +9,10 @@ function formatBytes(bytes) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
 }
 
 // ── Lazy local thumbnail ───────────────────────────────────────────────────────
@@ -336,17 +340,49 @@ export default function SetupScreen({ settings, onComplete }) {
   const [previewSrc, setPreviewSrc] = useState(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState('')
+  const [previewScale, setPreviewScale] = useState(1)
+  const [previewRotate, setPreviewRotate] = useState(0)
+  const [previewOffset, setPreviewOffset] = useState({ x: 0, y: 0 })
+  const [previewMode, setPreviewMode] = useState('fit')
+  const [previewDragging, setPreviewDragging] = useState(false)
+  const previewDragStartRef = useRef(null)
   const abortRef = useRef(false)
 
   useEffect(() => {
+    if (!previewOpen) return
+
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setPreviewOpen(false)
+        return
+      }
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault()
+        setPreviewScale(s => clamp(s + 0.15, 0.25, 5))
+        return
+      }
+      if (e.key === '-') {
+        e.preventDefault()
+        setPreviewScale(s => clamp(s - 0.15, 0.25, 5))
+        return
+      }
+      if (e.key === '0') {
+        e.preventDefault()
+        setPreviewScale(1)
+        setPreviewRotate(0)
+        setPreviewOffset({ x: 0, y: 0 })
+        setPreviewMode('fit')
+        return
+      }
+      if (e.key.toLowerCase() === 'r') {
+        e.preventDefault()
+        setPreviewRotate(v => v + 90)
       }
     }
+
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [previewOpen])
 
   useEffect(() => {
     checkOllama()
@@ -447,6 +483,12 @@ export default function SetupScreen({ settings, onComplete }) {
     setPreviewName(photo.name)
     setPreviewSrc(null)
     setPreviewError('')
+    setPreviewScale(1)
+    setPreviewRotate(0)
+    setPreviewOffset({ x: 0, y: 0 })
+    setPreviewMode('fit')
+    setPreviewDragging(false)
+    previewDragStartRef.current = null
     setPreviewLoading(true)
     try {
       const ext = photo.path.split('.').pop().toLowerCase()
@@ -462,6 +504,55 @@ export default function SetupScreen({ settings, onComplete }) {
     } finally {
       setPreviewLoading(false)
     }
+  }
+
+  const canPreviewPan = previewMode === 'actual' || previewScale > 1.01
+
+  const zoomPreviewBy = (delta) => {
+    setPreviewScale(s => clamp(s + delta, 0.25, 5))
+  }
+
+  const resetPreviewTransform = () => {
+    setPreviewScale(1)
+    setPreviewRotate(0)
+    setPreviewOffset({ x: 0, y: 0 })
+    setPreviewMode('fit')
+  }
+
+  const togglePreviewMode = () => {
+    setPreviewMode(mode => mode === 'fit' ? 'actual' : 'fit')
+    setPreviewScale(1)
+    setPreviewOffset({ x: 0, y: 0 })
+  }
+
+  const handlePreviewWheel = (e) => {
+    if (!previewSrc) return
+    e.preventDefault()
+    const step = e.deltaY < 0 ? 0.12 : -0.12
+    setPreviewScale(s => clamp(s + step, 0.25, 5))
+  }
+
+  const handlePreviewMouseDown = (e) => {
+    if (!canPreviewPan) return
+    e.preventDefault()
+    setPreviewDragging(true)
+    previewDragStartRef.current = {
+      x: e.clientX - previewOffset.x,
+      y: e.clientY - previewOffset.y
+    }
+  }
+
+  const handlePreviewMouseMove = (e) => {
+    if (!previewDragging || !previewDragStartRef.current) return
+    setPreviewOffset({
+      x: e.clientX - previewDragStartRef.current.x,
+      y: e.clientY - previewDragStartRef.current.y
+    })
+  }
+
+  const stopPreviewDrag = () => {
+    setPreviewDragging(false)
+    previewDragStartRef.current = null
   }
 
   const handleStartAnalysis = async () => {
@@ -655,6 +746,24 @@ export default function SetupScreen({ settings, onComplete }) {
             <div className="preview-modal-panel" onClick={(e) => e.stopPropagation()}>
               <div className="preview-modal-header">
                 <div className="preview-modal-title" title={previewName}>{previewName}</div>
+                <div className="preview-modal-actions">
+                  <button className="preview-modal-icon-btn" onClick={() => zoomPreviewBy(-0.15)} title="Zoom out (-)">
+                    <ZoomOut size={14} />
+                  </button>
+                  <span className="preview-zoom-readout">{Math.round(previewScale * 100)}%</span>
+                  <button className="preview-modal-icon-btn" onClick={() => zoomPreviewBy(0.15)} title="Zoom in (+)">
+                    <ZoomIn size={14} />
+                  </button>
+                  <button className="preview-modal-mode-btn" onClick={togglePreviewMode} title="Toggle fit / actual size">
+                    {previewMode === 'fit' ? '1:1' : 'Fit'}
+                  </button>
+                  <button className="preview-modal-icon-btn" onClick={() => setPreviewRotate(v => v + 90)} title="Rotate (R)">
+                    <RotateCw size={14} />
+                  </button>
+                  <button className="preview-modal-icon-btn" onClick={resetPreviewTransform} title="Reset view (0)">
+                    <RefreshCw size={14} />
+                  </button>
+                </div>
                 <button className="preview-modal-close" onClick={() => setPreviewOpen(false)}>
                   <X size={16} />
                 </button>
@@ -664,7 +773,25 @@ export default function SetupScreen({ settings, onComplete }) {
                 {previewLoading && <div className="preview-modal-loading">Loading full-size preview...</div>}
                 {!previewLoading && previewError && <div className="preview-modal-error">{previewError}</div>}
                 {previewSrc && !previewError && (
-                  <img src={previewSrc} alt={previewName} className="preview-modal-image" />
+                  <div
+                    className="preview-modal-viewport"
+                    onWheel={handlePreviewWheel}
+                    onMouseMove={handlePreviewMouseMove}
+                    onMouseUp={stopPreviewDrag}
+                    onMouseLeave={stopPreviewDrag}
+                  >
+                    <img
+                      src={previewSrc}
+                      alt={previewName}
+                      className={`preview-modal-image ${previewMode === 'actual' ? 'actual' : 'fit'}`}
+                      onMouseDown={handlePreviewMouseDown}
+                      draggable={false}
+                      style={{
+                        transform: `translate(${previewOffset.x}px, ${previewOffset.y}px) scale(${previewScale}) rotate(${previewRotate}deg)`,
+                        cursor: canPreviewPan ? (previewDragging ? 'grabbing' : 'grab') : 'default'
+                      }}
+                    />
+                  </div>
                 )}
               </div>
             </div>

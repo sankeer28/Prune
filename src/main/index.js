@@ -102,7 +102,7 @@ ipcMain.handle('load-photos', async (_, folderPath) => {
   return photos
 })
 
-// ── HEIC conversion helper ────────────────────────────────────────────────────
+// ── Image conversion helpers ──────────────────────────────────────────────────
 async function toJpegBuffer(buf, ext) {
   if (ext === '.heic' || ext === '.heif') {
     try {
@@ -113,6 +113,57 @@ async function toJpegBuffer(buf, ext) {
     }
   }
   return buf
+}
+
+// ── Thumbnail worker pool (keeps conversion off the main thread) ──────────────
+const { Worker } = require('worker_threads')
+const THUMB_POOL_SIZE = Math.max(2, os.cpus().length - 1)
+const thumbWorkers = []
+const thumbPending = new Map() // id → { resolve, reject }
+let thumbNextId = 0
+
+function initThumbPool() {
+  for (let i = 0; i < THUMB_POOL_SIZE; i++) {
+    const w = new Worker(path.join(__dirname, 'thumb-worker.js'))
+    w.on('message', ({ id, ok, buf, error }) => {
+      const p = thumbPending.get(id)
+      if (!p) return
+      thumbPending.delete(id)
+      ok ? p.resolve(Buffer.from(buf)) : p.reject(new Error(error))
+    })
+    w.on('error', e => console.error('thumb-worker error:', e.message))
+    thumbWorkers.push(w)
+  }
+}
+initThumbPool()
+
+function convertInWorker(buf, ext) {
+  const id = thumbNextId++
+  const worker = thumbWorkers[id % thumbWorkers.length]
+  return new Promise((resolve, reject) => {
+    thumbPending.set(id, { resolve, reject })
+    // Transfer buffer ownership to worker — zero copy
+    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+    worker.postMessage({ id, buf: ab, ext }, [ab])
+  })
+}
+
+// ── In-memory thumbnail cache (max 600 entries ≈ ~5 MB) ──────────────────────
+const thumbMemCache = new Map()
+const THUMB_CACHE_MAX = 600
+
+function cacheThumb(key, buf) {
+  if (thumbMemCache.size >= THUMB_CACHE_MAX) {
+    thumbMemCache.delete(thumbMemCache.keys().next().value) // evict oldest
+  }
+  thumbMemCache.set(key, buf)
+}
+
+async function toThumbnailBuffer(buf, ext, cacheKey) {
+  if (cacheKey && thumbMemCache.has(cacheKey)) return thumbMemCache.get(cacheKey)
+  const result = await convertInWorker(buf, ext)
+  if (cacheKey) cacheThumb(cacheKey, result)
+  return result
 }
 
 // ── IPC: Read image as base64 ────────────────────────────────────────────────
@@ -396,6 +447,7 @@ ipcMain.handle('list-wia-photos', async (_, udid) => {
     if (photos.length === 0) {
       return { error: 'No photos found in /DCIM on this iPhone. Make sure the phone is unlocked.' }
     }
+
     return photos
   } catch (e) {
     if (afc) try { await afc.close() } catch {}
@@ -404,26 +456,76 @@ ipcMain.handle('list-wia-photos', async (_, udid) => {
   }
 })
 
-// ── Shared AFC connection pool (reuse across thumbnail requests) ──────────────
-const afcPool = new Map() // udid → { afc, queue, busy }
+// ── AFC parallel connection pool ──────────────────────────────────────────────
+const AFC_WORKERS = 6   // parallel connections per device
+const AFC_CHUNK   = 900 * 1024
 
-async function afcRead(udid, remotePath) {
-  if (!afcPool.has(udid)) {
-    afcPool.set(udid, { afc: null, pending: [], busy: false })
+const afcPools = new Map() // udid → { workers: [{afc,busy}], pending: [] }
+
+function getPool(udid) {
+  if (!afcPools.has(udid)) {
+    afcPools.set(udid, {
+      workers: Array.from({ length: AFC_WORKERS }, () => ({ afc: null, busy: false })),
+      pending: []
+    })
   }
-  const entry = afcPool.get(udid)
+  return afcPools.get(udid)
+}
+
+async function afcRead(udid, remotePath, knownSize) {
+  const pool = getPool(udid)
   return new Promise((resolve, reject) => {
-    entry.pending.push({ remotePath, resolve, reject })
-    drainAfc(udid)
+    pool.pending.push({ remotePath, knownSize, resolve, reject })
+    scheduleWorkers(udid)
   })
 }
 
-const AFC_CHUNK = 900 * 1024 // max ~1MB per read call
+function scheduleWorkers(udid) {
+  const pool = afcPools.get(udid)
+  if (!pool) return
+  for (const worker of pool.workers) {
+    if (!worker.busy && pool.pending.length > 0) {
+      runWorker(udid, worker)
+    }
+  }
+}
 
-async function afcReadFile(afc, remotePath) {
-  const info = await afc.getFileInfo(remotePath)
-  const size = info.size || 0
-  const handle = await afc.openFile(remotePath, 2) // 2 = AFC_FOPEN_RDONLY
+async function runWorker(udid, worker) {
+  const pool = afcPools.get(udid)
+  worker.busy = true
+  try {
+    if (!worker.afc) {
+      const { services } = await import('appium-ios-device')
+      worker.afc = await services.startAfcService(udid)
+    }
+    while (pool.pending.length > 0) {
+      const { remotePath, knownSize, resolve, reject } = pool.pending.shift()
+      try {
+        const buf = await afcReadFile(worker.afc, remotePath, knownSize)
+        resolve(buf)
+      } catch (e) {
+        try { await worker.afc.close() } catch {}
+        worker.afc = null
+        reject(e)
+        break
+      }
+    }
+  } catch (e) {
+    // Worker setup failed — drain its share
+    while (pool.pending.length > 0) {
+      const { reject: rej } = pool.pending.shift()
+      rej(e)
+    }
+    worker.afc = null
+  } finally {
+    worker.busy = false
+    if (pool.pending.length > 0) runWorker(udid, worker)
+  }
+}
+
+async function afcReadFile(afc, remotePath, knownSize) {
+  const size = knownSize || (await afc.getFileInfo(remotePath)).size || 0
+  const handle = await afc.openFile(remotePath, 2)
   const chunks = []
   let remaining = size
   while (remaining > 0) {
@@ -437,47 +539,15 @@ async function afcReadFile(afc, remotePath) {
   return Buffer.concat(chunks)
 }
 
-async function drainAfc(udid) {
-  const entry = afcPool.get(udid)
-  if (!entry || entry.busy) return
-  if (entry.pending.length === 0) return
-  entry.busy = true
-  try {
-    if (!entry.afc) {
-      const { services } = await import('appium-ios-device')
-      entry.afc = await services.startAfcService(udid)
-    }
-    while (entry.pending.length > 0) {
-      const { remotePath, resolve, reject } = entry.pending.shift()
-      try {
-        const buf = await afcReadFile(entry.afc, remotePath)
-        resolve(buf)
-      } catch (e) {
-        // Connection may have died — clear it and retry once
-        try { await entry.afc.close() } catch {}
-        entry.afc = null
-        reject(e)
-        break
-      }
-    }
-  } catch (e) {
-    // Connection setup failed — reject all pending
-    for (const { reject: rej } of entry.pending) rej(e)
-    entry.pending = []
-    entry.afc = null
-  } finally {
-    entry.busy = false
-    if (entry.pending.length > 0) drainAfc(udid)
-  }
-}
-
 // ── IPC: Get a single file from iPhone AFC as base64 (for thumbnails) ────────
-ipcMain.handle('get-afc-file-base64', async (_, { udid, remotePath }) => {
+ipcMain.handle('get-afc-file-base64', async (_, { udid, remotePath, fileSize }) => {
   try {
-    let buf = await afcRead(udid, remotePath)
     const ext = path.extname(remotePath).toLowerCase()
-    buf = await toJpegBuffer(buf, ext)
-    return buf.toString('base64')
+    const cacheKey = (udid.slice(-8) + remotePath).replace(/[^a-z0-9]/gi, '_')
+    if (thumbMemCache.has(cacheKey)) return thumbMemCache.get(cacheKey).toString('base64')
+    const buf = await afcRead(udid, remotePath, fileSize)
+    const thumb = await toThumbnailBuffer(buf, ext, cacheKey)
+    return thumb.toString('base64')
   } catch (e) {
     return null
   }

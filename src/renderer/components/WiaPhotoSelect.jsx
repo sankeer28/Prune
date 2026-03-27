@@ -21,6 +21,30 @@ function formatDate(raw) {
   return ''
 }
 
+// Priority thumbnail queue — visible items go to front
+let inFlight = 0
+const MAX_FLIGHT = 8
+const thumbQueue = [] // { udid, remotePath, resolve, priority }
+
+function flushQueue() {
+  while (inFlight < MAX_FLIGHT && thumbQueue.length > 0) {
+    const { udid, remotePath, fileSize, resolve } = thumbQueue.shift()
+    inFlight++
+    window.electronAPI?.getAfcFileBase64({ udid, remotePath, fileSize })
+      .then(resolve)
+      .finally(() => { inFlight--; flushQueue() })
+  }
+}
+
+function queueThumb(udid, remotePath, fileSize, priority = false) {
+  return new Promise(resolve => {
+    const item = { udid, remotePath, fileSize, resolve }
+    if (priority) thumbQueue.unshift(item)
+    else thumbQueue.push(item)
+    flushQueue()
+  })
+}
+
 function ThumbImg({ udid, photo }) {
   const [src, setSrc] = useState(null)
   const ref = useRef()
@@ -28,17 +52,34 @@ function ThumbImg({ udid, photo }) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        obs.disconnect()
-        window.electronAPI?.getAfcFileBase64({ udid, remotePath: photo.path })
-          .then(b64 => {
-            if (b64) setSrc(`data:image/jpeg;base64,${b64}`)
-          })
+    let queued = false
+
+    // Visible now → high priority (front of queue)
+    const nearObs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !queued) {
+        queued = true
+        nearObs.disconnect()
+        farObs.disconnect()
+        queueThumb(udid, photo.path, photo.size, true).then(b64 => {
+          if (b64) setSrc(`data:image/jpeg;base64,${b64}`)
+        })
       }
-    }, { rootMargin: '200px' })
-    obs.observe(el)
-    return () => obs.disconnect()
+    }, { rootMargin: '0px' })
+
+    // Coming up soon → low priority (back of queue)
+    const farObs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !queued) {
+        queued = true
+        farObs.disconnect()
+        queueThumb(udid, photo.path, photo.size, false).then(b64 => {
+          if (b64) setSrc(`data:image/jpeg;base64,${b64}`)
+        })
+      }
+    }, { rootMargin: '300px' })
+
+    nearObs.observe(el)
+    farObs.observe(el)
+    return () => { nearObs.disconnect(); farObs.disconnect() }
   }, [photo.path, udid])
 
   return (

@@ -4,6 +4,7 @@ import ReviewScreen from './components/ReviewScreen.jsx'
 import FinalReview from './components/FinalReview.jsx'
 import Settings from './components/Settings.jsx'
 import OllamaStatus from './components/OllamaStatus.jsx'
+import { Settings2 } from 'lucide-react'
 import './App.css'
 
 export default function App() {
@@ -63,7 +64,7 @@ export default function App() {
             onClick={() => setShowSettings(true)}
             title="Settings"
           >
-            ⚙
+            <Settings2 size={20} />
           </button>
         </div>
       </header>

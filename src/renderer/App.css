@@ -12,6 +12,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
+  padding-right: 154px; /* leave room for Win32 titlebar overlay (3 buttons ~138px + gap) */
   height: 44px;
   background: var(--bg2);
   border-bottom: 1px solid var(--border);

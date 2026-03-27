@@ -584,9 +584,11 @@ export default function SetupScreen({ settings, onComplete }) {
 
   const isSubset = selectedPhotoSet.size < photos.length && selectedPhotoSet.size > 0
 
+  const needsSpace = Boolean(folder || activeTab === 'import' || !ollamaOk || (!modelReady && !pulling) || pulling)
+
   return (
     <div className="setup">
-      <div className="setup-center">
+      <div className={`setup-center ${needsSpace ? '' : 'is-centered'}`}>
         <h1 className="setup-title">
           Prune
         </h1>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { analyzePhoto } from '../../utils/analyzePhoto.js'
 import WiaPhotoSelect from './WiaPhotoSelect.jsx'
-import { Smartphone, HardDrive, AlertTriangle, Camera, Check, Folder, RefreshCw, ArrowRight, Image as ImageIcon, LayoutGrid } from 'lucide-react'
+import { Smartphone, HardDrive, AlertTriangle, Camera, Check, Folder, RefreshCw, ArrowRight, Image as ImageIcon, LayoutGrid, Expand, X } from 'lucide-react'
 import './SetupScreen.css'
 
 function formatBytes(bytes) {
@@ -12,32 +12,41 @@ function formatBytes(bytes) {
 }
 
 // ── Lazy local thumbnail ───────────────────────────────────────────────────────
-function LocalThumbImg({ photo }) {
+function LocalThumbImg({ photo, onOpenPreview }) {
   const [src, setSrc] = useState(null)
   const ref = useRef()
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    let alive = true
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         obs.disconnect()
-        const ext = photo.path.split('.').pop().toLowerCase()
-        if (ext === 'heic' || ext === 'heif') {
-          window.electronAPI?.readImageBase64(photo.path).then(b64 => {
-            if (b64) setSrc(`data:image/jpeg;base64,${b64}`)
-          })
-        } else {
-          setSrc(`file://${photo.path.replace(/\\/g, '/')}`)
-        }
+        window.electronAPI?.readImageThumbBase64(photo.path).then(b64 => {
+          if (alive && b64) setSrc(`data:image/jpeg;base64,${b64}`)
+        })
       }
     }, { rootMargin: '200px' })
     obs.observe(el)
-    return () => obs.disconnect()
+    return () => {
+      alive = false
+      obs.disconnect()
+    }
   }, [photo.path])
 
   return (
     <div ref={ref} className="folder-thumb">
+      <button
+        className="folder-preview-btn"
+        onClick={(e) => {
+          e.stopPropagation()
+          onOpenPreview(photo)
+        }}
+        title="Open full-size preview"
+      >
+        <Expand size={12} />
+      </button>
       {src
         ? <img src={src} alt={photo.name} className="folder-thumb-img" />
         : <div className="folder-thumb-placeholder"><ImageIcon size={20} strokeWidth={1.5} /></div>
@@ -322,7 +331,22 @@ export default function SetupScreen({ settings, onComplete }) {
   const [activeTab, setActiveTab] = useState('folder')
   const [showPhotoGrid, setShowPhotoGrid] = useState(false)
   const [selectedPhotoSet, setSelectedPhotoSet] = useState(new Set())
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewName, setPreviewName] = useState('')
+  const [previewSrc, setPreviewSrc] = useState(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewError, setPreviewError] = useState('')
   const abortRef = useRef(false)
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setPreviewOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   useEffect(() => {
     checkOllama()
@@ -417,6 +441,28 @@ export default function SetupScreen({ settings, onComplete }) {
   }
 
   const photosToReview = photos.filter(p => selectedPhotoSet.has(p.path))
+
+  const openFolderPreview = async (photo) => {
+    setPreviewOpen(true)
+    setPreviewName(photo.name)
+    setPreviewSrc(null)
+    setPreviewError('')
+    setPreviewLoading(true)
+    try {
+      const ext = photo.path.split('.').pop().toLowerCase()
+      if (ext === 'heic' || ext === 'heif') {
+        const b64 = await window.electronAPI?.readImageBase64(photo.path)
+        if (!b64) throw new Error('Could not load preview')
+        setPreviewSrc(`data:image/jpeg;base64,${b64}`)
+      } else {
+        setPreviewSrc(`file://${photo.path.replace(/\\/g, '/')}`)
+      }
+    } catch {
+      setPreviewError('Could not load full-size preview')
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
 
   const handleStartAnalysis = async () => {
     setAnalyzing(true)
@@ -552,7 +598,7 @@ export default function SetupScreen({ settings, onComplete }) {
                         onClick={() => toggleFolderPhoto(photo.path)}
                       >
                         <div className="wia-item-check">{isSelected ? <Check size={10} /> : ''}</div>
-                        <LocalThumbImg photo={photo} />
+                        <LocalThumbImg photo={photo} onOpenPreview={openFolderPreview} />
                         <div className="wia-item-name">{photo.name}</div>
                       </div>
                     )
@@ -601,6 +647,27 @@ export default function SetupScreen({ settings, onComplete }) {
         {activeTab === 'import' && (
           <div className="setup-card">
             <ImportTab onImported={loadFolder} />
+          </div>
+        )}
+
+        {previewOpen && (
+          <div className="preview-modal-backdrop" onClick={() => setPreviewOpen(false)}>
+            <div className="preview-modal-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="preview-modal-header">
+                <div className="preview-modal-title" title={previewName}>{previewName}</div>
+                <button className="preview-modal-close" onClick={() => setPreviewOpen(false)}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="preview-modal-body">
+                {previewLoading && <div className="preview-modal-loading">Loading full-size preview...</div>}
+                {!previewLoading && previewError && <div className="preview-modal-error">{previewError}</div>}
+                {previewSrc && !previewError && (
+                  <img src={previewSrc} alt={previewName} className="preview-modal-image" />
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

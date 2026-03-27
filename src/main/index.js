@@ -120,6 +120,19 @@ async function toJpegBuffer(buf, ext) {
   return buf
 }
 
+function mimeFromExt(ext) {
+  const e = (ext || '').toLowerCase()
+  if (e === '.jpg' || e === '.jpeg') return 'image/jpeg'
+  if (e === '.png') return 'image/png'
+  if (e === '.webp') return 'image/webp'
+  if (e === '.gif') return 'image/gif'
+  if (e === '.bmp') return 'image/bmp'
+  if (e === '.tiff' || e === '.tif') return 'image/tiff'
+  // HEIC/HEIF are converted to JPEG for renderer compatibility.
+  if (e === '.heic' || e === '.heif') return 'image/jpeg'
+  return 'application/octet-stream'
+}
+
 // ── Thumbnail worker pool (keeps conversion off the main thread) ──────────────
 const { Worker } = require('worker_threads')
 const THUMB_POOL_SIZE = Math.max(2, os.cpus().length - 1)
@@ -178,6 +191,19 @@ ipcMain.handle('read-image-base64', async (_, imagePath) => {
     let data = fs.readFileSync(imagePath)
     data = await toJpegBuffer(data, ext)
     return data.toString('base64')
+  } catch (e) {
+    return null
+  }
+})
+
+// ── IPC: Read image thumbnail as base64 ──────────────────────────────────────
+ipcMain.handle('read-image-thumb-base64', async (_, imagePath) => {
+  try {
+    const ext = path.extname(imagePath).toLowerCase()
+    const data = fs.readFileSync(imagePath)
+    const cacheKey = (`local:${imagePath}`).replace(/[^a-z0-9]/gi, '_')
+    const thumb = await toThumbnailBuffer(data, ext, cacheKey)
+    return thumb.toString('base64')
   } catch (e) {
     return null
   }
@@ -553,6 +579,22 @@ ipcMain.handle('get-afc-file-base64', async (_, { udid, remotePath, fileSize }) 
     const buf = await afcRead(udid, remotePath, fileSize)
     const thumb = await toThumbnailBuffer(buf, ext, cacheKey)
     return thumb.toString('base64')
+  } catch (e) {
+    return null
+  }
+})
+
+// ── IPC: Get a single full-resolution file from iPhone AFC as base64 ─────────
+ipcMain.handle('get-afc-file-full-base64', async (_, { udid, remotePath, fileSize }) => {
+  try {
+    const ext = path.extname(remotePath).toLowerCase()
+    const buf = await afcRead(udid, remotePath, fileSize)
+    const out = await toJpegBuffer(buf, ext)
+    return {
+      base64: out.toString('base64'),
+      mime: mimeFromExt(ext),
+      converted: ext === '.heic' || ext === '.heif'
+    }
   } catch (e) {
     return null
   }

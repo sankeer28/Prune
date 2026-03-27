@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Image as ImageIcon, ArrowLeft, Check, ArrowRight } from 'lucide-react'
+import { Image as ImageIcon, ArrowLeft, Check, ArrowRight, Expand, X } from 'lucide-react'
 import './WiaPhotoSelect.css'
 
 function formatBytes(bytes) {
@@ -45,7 +45,7 @@ function queueThumb(udid, remotePath, fileSize, priority = false) {
   })
 }
 
-function ThumbImg({ udid, photo }) {
+function ThumbImg({ udid, photo, onOpenPreview }) {
   const [src, setSrc] = useState(null)
   const ref = useRef()
 
@@ -84,6 +84,16 @@ function ThumbImg({ udid, photo }) {
 
   return (
     <div ref={ref} className="wia-thumb">
+      <button
+        className="wia-preview-btn"
+        onClick={(e) => {
+          e.stopPropagation()
+          onOpenPreview(photo)
+        }}
+        title="Open full-size preview"
+      >
+        <Expand size={12} />
+      </button>
       {src
         ? <img src={src} alt={photo.name} className="wia-thumb-img" />
         : <div className="wia-thumb-placeholder"><ImageIcon size={22} strokeWidth={1.5} /></div>
@@ -97,6 +107,11 @@ export default function WiaPhotoSelect({ deviceId, onConfirm, onCancel }) {
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
   const [selected, setSelected] = useState(new Set())
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewName, setPreviewName] = useState('')
+  const [previewSrc, setPreviewSrc] = useState(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewError, setPreviewError] = useState('')
 
   useEffect(() => {
     load()
@@ -146,6 +161,38 @@ export default function WiaPhotoSelect({ deviceId, onConfirm, onCancel }) {
     .filter(p => selected.has(key(p)))
     .reduce((s, p) => s + (p.size || 0), 0)
 
+  const openPreview = useCallback(async (photo) => {
+    setPreviewOpen(true)
+    setPreviewName(photo.name)
+    setPreviewSrc(null)
+    setPreviewError('')
+    setPreviewLoading(true)
+    try {
+      const result = await window.electronAPI?.getAfcFileFullBase64({
+        udid: deviceId,
+        remotePath: photo.path,
+        fileSize: photo.size
+      })
+      if (!result?.base64) throw new Error('Could not load preview')
+      const mime = result.mime || 'image/jpeg'
+      setPreviewSrc(`data:${mime};base64,${result.base64}`)
+    } catch {
+      setPreviewError('Could not load full-size preview')
+    } finally {
+      setPreviewLoading(false)
+    }
+  }, [deviceId])
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setPreviewOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   if (loading) {
     return (
       <div className="wia-loading">
@@ -191,7 +238,7 @@ export default function WiaPhotoSelect({ deviceId, onConfirm, onCancel }) {
               onClick={() => toggle(photo)}
             >
               <div className="wia-item-check">{isSelected ? <Check size={10} /> : ''}</div>
-              <ThumbImg udid={deviceId} photo={photo} />
+              <ThumbImg udid={deviceId} photo={photo} onOpenPreview={openPreview} />
               <div className="wia-item-name">{photo.name}</div>
               <div className="wia-item-meta">
                 {formatDate(photo.date)}{photo.size ? ` · ${formatBytes(photo.size)}` : ''}
@@ -210,6 +257,27 @@ export default function WiaPhotoSelect({ deviceId, onConfirm, onCancel }) {
           Import {selected.size} photo{selected.size !== 1 ? 's' : ''} <ArrowRight size={15} style={{verticalAlign:'middle', marginLeft:4}} />
         </button>
       </div>
+
+      {previewOpen && (
+        <div className="preview-modal-backdrop" onClick={() => setPreviewOpen(false)}>
+          <div className="preview-modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="preview-modal-header">
+              <div className="preview-modal-title" title={previewName}>{previewName}</div>
+              <button className="preview-modal-close" onClick={() => setPreviewOpen(false)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="preview-modal-body">
+              {previewLoading && <div className="preview-modal-loading">Loading full-size preview...</div>}
+              {!previewLoading && previewError && <div className="preview-modal-error">{previewError}</div>}
+              {previewSrc && !previewError && (
+                <img src={previewSrc} alt={previewName} className="preview-modal-image" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

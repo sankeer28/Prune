@@ -311,8 +311,26 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
+  padding-right: 8px;
+}
+
+.device-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.device-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.device-list::-webkit-scrollbar-thumb {
+  background: var(--border-mid);
+  border-radius: 8px;
+}
+
+.device-list::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hi);
 }
 
 .device-btn {

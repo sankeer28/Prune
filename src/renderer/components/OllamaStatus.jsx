@@ -19,7 +19,7 @@ export default function OllamaStatus() {
   }, [])
 
   const color = status === 'ok' ? '#4ade80' : status === 'error' ? '#f87171' : '#fbbf24'
-  const label = status === 'ok' ? 'Ollama ready' : status === 'error' ? 'Ollama offline' : 'Checking...'
+  const label = status === 'ok' ? 'AI ready' : status === 'error' ? 'Ollama offline' : 'Checking...'
 
   return (
     <div

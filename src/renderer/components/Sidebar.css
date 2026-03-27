@@ -1,14 +1,13 @@
 .sidebar {
-  width: 220px;
+  width: 210px;
   flex-shrink: 0;
   background: var(--bg2);
   border-right: 1px solid var(--border);
-  padding: 16px 14px;
+  padding: 18px 14px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  justify-content: flex-start;
+  gap: 22px;
 }
 
 .sidebar-section {
@@ -26,22 +25,25 @@
   margin-bottom: 2px;
 }
 
+/* ── Stats ── */
 .sidebar-stat {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 12px;
 }
 .sidebar-stat-label {
-  color: var(--text2);
+  color: var(--text3);
 }
 .sidebar-stat-value {
-  color: var(--text);
   font-weight: 500;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
+/* ── Progress bar ── */
 .sidebar-progress-bar {
-  height: 3px;
+  height: 2px;
   background: var(--bg4);
   border-radius: 2px;
   overflow: hidden;
@@ -50,50 +52,58 @@
   height: 100%;
   background: var(--accent);
   border-radius: 2px;
-  transition: width 0.3s;
+  transition: width 0.3s ease;
 }
 
+/* ── Decision rows ── */
 .sidebar-decision-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13px;
-  color: var(--text2);
-  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text3);
+  padding: 3px 0;
 }
 
 .sidebar-badge {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   background: var(--bg3);
   padding: 1px 8px;
-  border-radius: 10px;
-  color: var(--text);
+  border-radius: 6px;
+  color: var(--text2);
+  font-variant-numeric: tabular-nums;
 }
 .sidebar-badge.delete {
-  background: rgba(248, 113, 113, 0.15);
+  background: var(--red-dim);
   color: var(--red);
 }
 .sidebar-badge.keep {
-  background: rgba(74, 222, 128, 0.15);
+  background: var(--green-dim);
   color: var(--green);
 }
 
+/* ── Big stat (deletion count) ── */
 .sidebar-big-stat {
-  font-size: 22px;
-  font-weight: 700;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  font-style: italic;
   color: var(--red);
+  line-height: 1;
+  letter-spacing: -0.5px;
 }
 
+/* ── Category mini-bars ── */
 .sidebar-cat-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: 7px;
+  font-size: 11px;
 }
 .sidebar-cat-label {
-  color: var(--text2);
-  width: 80px;
+  color: var(--text3);
+  width: 72px;
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -102,7 +112,7 @@
 }
 .sidebar-cat-bar {
   flex: 1;
-  height: 3px;
+  height: 2px;
   background: var(--bg4);
   border-radius: 2px;
   overflow: hidden;
@@ -111,34 +121,39 @@
   height: 100%;
   background: var(--accent);
   border-radius: 2px;
-  opacity: 0.7;
+  opacity: 0.6;
 }
+.sidebar-cat-count {
+  color: var(--text3);
+  width: 18px;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Footer / Back button ── */
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 12px;
+  padding-top: 14px;
   border-top: 1px solid var(--border);
 }
 
 .sidebar-back-btn {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
   padding: 8px 10px;
   background: none;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 7px;
   color: var(--text3);
   font-size: 12px;
   text-align: left;
-  transition: all 0.15s;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
 }
 .sidebar-back-btn:hover {
   color: var(--text);
   background: var(--bg3);
-  border-color: var(--bg4);
-}
-
-.sidebar-cat-count {
-  color: var(--text3);
-  width: 20px;
-  text-align: right;
-  flex-shrink: 0;
+  border-color: var(--border-mid);
 }

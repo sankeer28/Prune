@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { analyzePhoto } from '../../utils/analyzePhoto.js'
 import WiaPhotoSelect from './WiaPhotoSelect.jsx'
-import { Smartphone, HardDrive, AlertTriangle, Camera, Check, Folder, RefreshCw, ArrowRight } from 'lucide-react'
+import { Smartphone, HardDrive, AlertTriangle, Camera, Check, Folder, RefreshCw, ArrowRight, Image as ImageIcon, LayoutGrid } from 'lucide-react'
 import './SetupScreen.css'
 
 function formatBytes(bytes) {
@@ -9,6 +9,41 @@ function formatBytes(bytes) {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
   if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
+}
+
+// ── Lazy local thumbnail ───────────────────────────────────────────────────────
+function LocalThumbImg({ photo }) {
+  const [src, setSrc] = useState(null)
+  const ref = useRef()
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        obs.disconnect()
+        const ext = photo.path.split('.').pop().toLowerCase()
+        if (ext === 'heic' || ext === 'heif') {
+          window.electronAPI?.readImageBase64(photo.path).then(b64 => {
+            if (b64) setSrc(`data:image/jpeg;base64,${b64}`)
+          })
+        } else {
+          setSrc(`file://${photo.path.replace(/\\/g, '/')}`)
+        }
+      }
+    }, { rootMargin: '200px' })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [photo.path])
+
+  return (
+    <div ref={ref} className="folder-thumb">
+      {src
+        ? <img src={src} alt={photo.name} className="folder-thumb-img" />
+        : <div className="folder-thumb-placeholder"><ImageIcon size={20} strokeWidth={1.5} /></div>
+      }
+    </div>
+  )
 }
 
 // ── Import Tab ────────────────────────────────────────────────────────────────
@@ -285,6 +320,8 @@ export default function SetupScreen({ settings, onComplete }) {
   const [pullStatus, setPullStatus] = useState('')
   const [pullPct, setPullPct] = useState(0)
   const [activeTab, setActiveTab] = useState('folder')
+  const [showPhotoGrid, setShowPhotoGrid] = useState(false)
+  const [selectedPhotoSet, setSelectedPhotoSet] = useState(new Set())
   const abortRef = useRef(false)
 
   useEffect(() => {
@@ -353,6 +390,8 @@ export default function SetupScreen({ settings, onComplete }) {
     if (result?.error) { alert(result.error); return }
     setPhotos(result)
     setTotalSize(result.reduce((s, ph) => s + ph.size, 0))
+    setSelectedPhotoSet(new Set(result.map(ph => ph.path)))
+    setShowPhotoGrid(false)
     setActiveTab('folder')
   }
 
@@ -361,15 +400,33 @@ export default function SetupScreen({ settings, onComplete }) {
     if (p) loadFolder(p)
   }
 
+  const toggleFolderPhoto = (path) => {
+    setSelectedPhotoSet(s => {
+      const next = new Set(s)
+      next.has(path) ? next.delete(path) : next.add(path)
+      return next
+    })
+  }
+
+  const toggleAllFolderPhotos = () => {
+    if (selectedPhotoSet.size === photos.length) {
+      setSelectedPhotoSet(new Set())
+    } else {
+      setSelectedPhotoSet(new Set(photos.map(p => p.path)))
+    }
+  }
+
+  const photosToReview = photos.filter(p => selectedPhotoSet.has(p.path))
+
   const handleStartAnalysis = async () => {
     setAnalyzing(true)
     abortRef.current = false
     const results = []
 
-    for (let i = 0; i < photos.length; i++) {
+    for (let i = 0; i < photosToReview.length; i++) {
       if (abortRef.current) break
-      const photo = photos[i]
-      setProgress({ current: i + 1, total: photos.length, file: photo.name })
+      const photo = photosToReview[i]
+      setProgress({ current: i + 1, total: photosToReview.length, file: photo.name })
       const base64   = await window.electronAPI?.readImageBase64(photo.path)
       const analysis = base64 ? await analyzePhoto(photo.path, base64, settings) : null
       results.push({ ...photo, analysis })
@@ -380,13 +437,15 @@ export default function SetupScreen({ settings, onComplete }) {
   }
 
   const handleSkipAnalysis = () => {
-    onComplete(photos.map(p => ({
+    onComplete(photosToReview.map(p => ({
       ...p,
       analysis: { recommendation: 'review', reason: 'Not analyzed', quality_score: 5, category: 'other', people_count: 0, issues: [] }
     })), folder)
   }
 
   const pct = progress.total > 0 ? (progress.current / progress.total) * 100 : 0
+
+  const isSubset = selectedPhotoSet.size < photos.length && selectedPhotoSet.size > 0
 
   return (
     <div className="setup">
@@ -456,6 +515,52 @@ export default function SetupScreen({ settings, onComplete }) {
               </div>
             )}
 
+            {photos.length > 0 && (
+              <div className="folder-grid-toggle-row">
+                <button
+                  className={`folder-grid-toggle-btn ${showPhotoGrid ? 'active' : ''}`}
+                  onClick={() => setShowPhotoGrid(s => !s)}
+                >
+                  <LayoutGrid size={13} />
+                  {showPhotoGrid ? 'Hide preview' : 'Preview & select photos'}
+                </button>
+                {isSubset && (
+                  <span className="folder-selection-note">
+                    {selectedPhotoSet.size} of {photos.length} selected
+                  </span>
+                )}
+              </div>
+            )}
+
+            {photos.length > 0 && showPhotoGrid && (
+              <div className="folder-photo-select">
+                <div className="folder-photo-toolbar">
+                  <button className="wia-select-all" onClick={toggleAllFolderPhotos}>
+                    {selectedPhotoSet.size === photos.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                  <span className="wia-count">
+                    {selectedPhotoSet.size} of {photos.length} selected
+                  </span>
+                </div>
+                <div className="folder-photo-grid">
+                  {photos.map(photo => {
+                    const isSelected = selectedPhotoSet.has(photo.path)
+                    return (
+                      <div
+                        key={photo.path}
+                        className={`wia-item ${isSelected ? 'selected' : ''}`}
+                        onClick={() => toggleFolderPhoto(photo.path)}
+                      >
+                        <div className="wia-item-check">{isSelected ? <Check size={10} /> : ''}</div>
+                        <LocalThumbImg photo={photo} />
+                        <div className="wia-item-name">{photo.name}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {analyzing && (
               <div className="progress-section">
                 <div className="progress-label">
@@ -469,15 +574,26 @@ export default function SetupScreen({ settings, onComplete }) {
               </div>
             )}
 
-            {!analyzing && photos.length > 0 && (
+            {!analyzing && photosToReview.length > 0 && (
               <div className="setup-actions">
                 <button className="btn btn-primary" onClick={handleStartAnalysis} disabled={!ollamaOk || !modelReady || pulling}>
-                  {!ollamaOk ? <><AlertTriangle size={14} style={{verticalAlign:'middle', marginRight:4}} />Ollama Offline</> : !modelReady ? <><AlertTriangle size={14} style={{verticalAlign:'middle', marginRight:4}} />Model not downloaded</> : `Analyze with AI (${settings.model})`}
+                  {!ollamaOk
+                    ? <><AlertTriangle size={14} style={{verticalAlign:'middle', marginRight:4}} />Ollama Offline</>
+                    : !modelReady
+                      ? <><AlertTriangle size={14} style={{verticalAlign:'middle', marginRight:4}} />Model not downloaded</>
+                      : isSubset
+                        ? `Analyze ${photosToReview.length} photos with AI`
+                        : `Analyze with AI (${settings.model})`
+                  }
                 </button>
                 <button className="btn btn-ghost" onClick={handleSkipAnalysis}>
                   Skip AI <ArrowRight size={14} style={{verticalAlign:'middle', marginLeft:4}} /> Review manually
                 </button>
               </div>
+            )}
+
+            {!analyzing && photosToReview.length === 0 && photos.length > 0 && (
+              <p className="folder-none-selected">No photos selected — select at least one to continue.</p>
             )}
           </div>
         )}

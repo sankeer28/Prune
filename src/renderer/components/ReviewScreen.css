@@ -5,64 +5,82 @@
   overflow: hidden;
 }
 
+/* ── Main column ── */
 .review-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg);
 }
 
+/* ── Top bar ── */
 .review-topbar {
   padding: 6px 12px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  min-height: 38px;
 }
 
 .review-cancel-btn {
   font-size: 12px;
-  padding: 5px 12px;
+  padding: 5px 10px;
   color: var(--text3);
   border-color: transparent;
+  background: none;
 }
 .review-cancel-btn:hover {
-  color: var(--text);
+  color: var(--text2);
 }
 
+/* ── Photo area ── */
 .review-photo-area {
   flex: 1;
   position: relative;
   overflow: hidden;
-  padding: 20px;
-}
-
-.review-done {
-  flex: 1;
+  padding: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* ── Session done card ── */
+.review-done {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-up 0.2s ease;
+}
+
 .review-done-card {
   background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 40px;
+  border: 1px solid var(--border-mid);
+  border-radius: 14px;
+  padding: 44px 52px;
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 400px;
+  align-items: center;
+  gap: 14px;
+  max-width: 380px;
   width: 100%;
 }
 
 .review-done-card h2 {
-  font-size: 24px;
-  font-weight: 700;
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 26px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  letter-spacing: -0.3px;
 }
 
 .review-done-sub {
-  font-size: 14px;
-  color: var(--text2);
+  font-size: 13px;
+  color: var(--text3);
+  line-height: 1.6;
 }

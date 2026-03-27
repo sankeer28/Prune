@@ -426,6 +426,31 @@ ipcMain.handle('browse-mtp-folders', async (_, devicePath) => {
 // ── iPhone AFC helpers ────────────────────────────────────────────────────────
 const IMAGE_EXTS_AFC = ['.jpg','.jpeg','.png','.heic','.heif','.webp','.gif','.bmp','.tiff','.tif','.mov','.mp4']
 
+function friendlyIphoneError(e) {
+  let msg = e.message || String(e)
+  if (msg.includes('Unexpected data:')) {
+    try {
+      const match = msg.match(/Unexpected data:\s*(\{.*\})/)
+      if (match) {
+        const obj = JSON.parse(match[1])
+        if (obj.Error === 'PasswordProtected') {
+          return 'Your iPhone is locked. Please unlock it with your passcode and try again.'
+        }
+        if (obj.Error === 'InvalidService') {
+          return 'Service unavailable. Please reconnect your iPhone, unlock it, and ensure you tap "Trust".'
+        }
+        if (obj.Error) {
+          return `iPhone error: ${obj.Error}. Please check your phone.`
+        }
+      }
+    } catch (err) {}
+  }
+  if (msg.includes('PasswordProtected')) {
+    return 'Your iPhone is locked. Please unlock it with your passcode and try again.'
+  }
+  return msg
+}
+
 async function afcListPhotos(afc, dir = '/DCIM') {
   const photos = []
   // Let listDirectory throw — caller handles errors
@@ -468,7 +493,7 @@ ipcMain.handle('list-wia-photos', async (_, udid) => {
     } catch (e) {
       console.error('AFC: cannot list root:', e.message)
       await afc.close()
-      return { error: `Cannot access iPhone filesystem: ${e.message}. Make sure the phone is unlocked and you tapped "Trust" on it.` }
+      return { error: `Cannot access iPhone filesystem: ${friendlyIphoneError(e)} Make sure the phone is unlocked and you tapped "Trust".` }
     }
 
     const photos = await afcListPhotos(afc)
@@ -483,7 +508,7 @@ ipcMain.handle('list-wia-photos', async (_, udid) => {
   } catch (e) {
     if (afc) try { await afc.close() } catch {}
     console.error('list-iphone-photos failed:', e.message, e.stack)
-    return { error: `Failed to connect to iPhone: ${e.message}` }
+    return { error: `Failed to connect to iPhone: ${friendlyIphoneError(e)}` }
   }
 })
 
@@ -628,7 +653,7 @@ ipcMain.handle('import-selected-wia', async (_, { deviceId: udid, selectedNames,
     return { success: true, copied, total }
   } catch (e) {
     if (afc) try { await afc.close() } catch {}
-    return { success: false, error: e.message }
+    return { success: false, error: friendlyIphoneError(e) }
   }
 })
 

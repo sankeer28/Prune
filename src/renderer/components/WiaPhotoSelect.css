@@ -106,7 +106,6 @@
   align-items: stretch;
   gap: 0;
   transition: border-color 0.12s, background 0.12s;
-  overflow: hidden;
 }
 .wia-item:hover {
   border-color: var(--border-mid);

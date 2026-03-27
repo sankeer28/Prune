@@ -48,7 +48,7 @@ function LocalThumbImg({ photo }) {
 
 // ── Import Tab ────────────────────────────────────────────────────────────────
 function ImportTab({ onImported }) {
-  const [scanning, setScanning]       = useState(false)
+  const [scanning, setScanning]       = useState(true)
   const [devices, setDevices]         = useState([])
   const [selectedDevice, setSelectedDevice] = useState(null)
   const [browsingFolders, setBrowsingFolders] = useState(false)

@@ -1,0 +1,121 @@
+.settings-modal {
+  width: 500px;
+}
+
+.settings-section {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text3);
+}
+
+.model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.model-option:hover {
+  background: var(--bg4);
+}
+.model-option.active {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.model-name {
+  font-size: 14px;
+  font-weight: 500;
+  flex: 1;
+}
+.model-meta {
+  font-size: 12px;
+  color: var(--text3);
+}
+.model-installed {
+  font-size: 11px;
+  color: var(--green);
+  background: rgba(74, 222, 128, 0.1);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 8px;
+}
+
+.radio-opt {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text2);
+  transition: all 0.15s;
+}
+.radio-opt input {
+  display: none;
+}
+.radio-opt:hover {
+  background: var(--bg4);
+  color: var(--text);
+}
+.radio-opt.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+.toggle-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+.toggle-label {}
+
+.settings-hint {
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}

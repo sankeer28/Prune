@@ -1,0 +1,92 @@
+.swipe-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  flex-shrink: 0;
+}
+
+.swipe-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swipe-counter {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.swipe-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.swipe-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 20px;
+  transition: all 0.15s;
+  min-width: 72px;
+}
+
+.swipe-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.swipe-delete {
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--red);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+.swipe-delete:hover {
+  background: rgba(248, 113, 113, 0.22);
+  transform: scale(1.06);
+}
+
+.swipe-keep {
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--green);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+.swipe-keep:hover {
+  background: rgba(74, 222, 128, 0.22);
+  transform: scale(1.06);
+}
+
+.swipe-skip {
+  background: var(--bg3);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+.swipe-skip:hover {
+  background: var(--bg4);
+}
+
+.swipe-undo {
+  background: var(--bg3);
+  color: var(--text3);
+  border: 1px solid var(--border);
+  font-size: 18px;
+}
+.swipe-undo:hover {
+  color: var(--text);
+  background: var(--bg4);
+}
+
+.swipe-hints {
+  display: flex;
+  gap: 20px;
+  font-size: 11px;
+  color: var(--text3);
+}

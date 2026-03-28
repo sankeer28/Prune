@@ -13,6 +13,13 @@ const MODELS = [
   { id: 'llama3.2-vision:11b', label: 'llama3.2-vision:11b', size: '7.8 GB', note: 'Best all-round · 128K context' },
 ]
 
+// Ollama stores untagged models as "name:latest", so "moondream" is "moondream:latest".
+// Models with explicit tags like "llava:7b" are stored as-is.
+function isInstalled(modelId, ollamaModels) {
+  const withLatest = modelId.includes(':') ? modelId : `${modelId}:latest`
+  return ollamaModels.some(n => n === modelId || n === withLatest)
+}
+
 export default function Settings({ settings, onSave, onClose, asPage = false }) {
   const [local, setLocal] = useState({ ...settings })
   const [ollamaModels, setOllamaModels] = useState([])
@@ -46,7 +53,7 @@ export default function Settings({ settings, onSave, onClose, asPage = false }) 
             >
               <div className="model-name">{m.label}</div>
               <div className="model-meta">{m.size} · {m.note}</div>
-              {ollamaModels.includes(m.id) && <span className="model-installed"><Check size={11} style={{verticalAlign:'middle', marginRight:3}} />installed</span>}
+              {isInstalled(m.id, ollamaModels) && <span className="model-installed"><Check size={11} style={{verticalAlign:'middle', marginRight:3}} />installed</span>}
             </div>
           ))}
         </div>

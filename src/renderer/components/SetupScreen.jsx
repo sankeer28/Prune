@@ -395,9 +395,10 @@ export default function SetupScreen({ settings, onComplete }) {
       if (!r.ok) { setOllamaOk(false); return }
       setOllamaOk(true)
       const data = await r.json()
-      const installed = (data.models || []).map(m => m.name.split(':')[0])
-      const wantedBase = settings.model.split(':')[0]
-      setModelReady(installed.includes(wantedBase))
+      const installed = (data.models || []).map(m => m.name)
+      const wanted = settings.model
+      const wantedNorm = wanted.includes(':') ? wanted : `${wanted}:latest`
+      setModelReady(installed.some(n => n === wanted || n === wantedNorm))
     } catch {
       setOllamaOk(false)
     }

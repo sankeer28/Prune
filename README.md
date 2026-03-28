@@ -2,7 +2,9 @@
 <p align="center">
   <img width="908" height="235" alt="image" src="https://github.com/user-attachments/assets/f89b7c75-32c5-490a-aeef-6a4f351d8fd7" />
 </p>
+
 Using local AI vision models to help find and delete bad photos
+
 ## Requirements
 
 - [Node.js](https://nodejs.org) 18+

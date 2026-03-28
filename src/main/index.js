@@ -35,12 +35,8 @@ async function createWindow() {
     minHeight: 700,
     backgroundColor: '#0e0c0f',
     icon: iconPath,
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
-    titleBarOverlay: process.platform === 'win32' ? {
-      color: '#16121a',
-      symbolColor: '#9e8fa8',
-      height: 44
-    } : false,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -49,6 +45,9 @@ async function createWindow() {
     }
   })
 
+  mainWindow.on('maximize', () => mainWindow.webContents.send('window-maximized', true))
+  mainWindow.on('unmaximize', () => mainWindow.webContents.send('window-maximized', false))
+
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173')
     mainWindow.webContents.openDevTools()
@@ -56,6 +55,15 @@ async function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../../dist/renderer/index.html'))
   }
 }
+
+// ── Window controls ──────────────────────────────────────────────────────────
+ipcMain.handle('window-minimize', () => mainWindow?.minimize())
+ipcMain.handle('window-maximize', () => {
+  if (mainWindow?.isMaximized()) mainWindow.unmaximize()
+  else mainWindow?.maximize()
+})
+ipcMain.handle('window-close', () => mainWindow?.close())
+ipcMain.handle('window-is-maximized', () => mainWindow?.isMaximized() ?? false)
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null)

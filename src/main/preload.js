@@ -23,5 +23,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onImportProgress: (cb) => {
     ipcRenderer.on('import-progress', (_, data) => cb(data))
     return () => ipcRenderer.removeAllListeners('import-progress')
+  },
+  windowMinimize: () => ipcRenderer.invoke('window-minimize'),
+  windowMaximize: () => ipcRenderer.invoke('window-maximize'),
+  windowClose: () => ipcRenderer.invoke('window-close'),
+  windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+  onWindowMaximized: (cb) => {
+    ipcRenderer.on('window-maximized', (_, val) => cb(val))
+    return () => ipcRenderer.removeAllListeners('window-maximized')
   }
 })

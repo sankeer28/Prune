@@ -10,9 +10,7 @@
 .app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  padding-right: 154px; /* leave room for Win32 titlebar overlay (3 buttons ~138px + gap) */
+  padding: 0 0 0 16px;
   height: 44px;
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
@@ -26,6 +24,41 @@
   align-items: center;
   gap: 10px;
   -webkit-app-region: no-drag;
+}
+
+.app-header-right {
+  margin-left: auto;
+}
+
+/* ── Custom window controls ── */
+.win-controls {
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  margin-left: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.win-btn {
+  width: 46px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text3);
+  transition: background 0.12s, color 0.12s;
+}
+
+.win-btn:hover {
+  background: var(--bg4);
+  color: var(--text);
+}
+
+.win-btn-close:hover {
+  background: #c42b1c;
+  color: #fff;
 }
 
 .app-logo {

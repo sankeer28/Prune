@@ -4,9 +4,45 @@ import ReviewScreen from './components/ReviewScreen.jsx'
 import FinalReview from './components/FinalReview.jsx'
 import Settings from './components/Settings.jsx'
 import OllamaStatus from './components/OllamaStatus.jsx'
-import { Settings2 } from 'lucide-react'
+import { Settings2, Minus, Square, X, Maximize2 } from 'lucide-react'
 import './App.css'
 import iconUrl from '../../assets/icon.svg'
+
+function WindowControls() {
+  const [maximized, setMaximized] = useState(false)
+
+  useEffect(() => {
+    window.electronAPI?.windowIsMaximized().then(v => setMaximized(v ?? false))
+    const cleanup = window.electronAPI?.onWindowMaximized(setMaximized)
+    return () => cleanup?.()
+  }, [])
+
+  return (
+    <div className="win-controls">
+      <button
+        className="win-btn win-btn-min"
+        onClick={() => window.electronAPI?.windowMinimize()}
+        title="Minimize"
+      >
+        <Minus size={16} strokeWidth={2} />
+      </button>
+      <button
+        className="win-btn win-btn-max"
+        onClick={() => window.electronAPI?.windowMaximize()}
+        title={maximized ? 'Restore' : 'Maximize'}
+      >
+        {maximized ? <Square size={14} strokeWidth={2} /> : <Maximize2 size={14} strokeWidth={2} />}
+      </button>
+      <button
+        className="win-btn win-btn-close"
+        onClick={() => window.electronAPI?.windowClose()}
+        title="Close"
+      >
+        <X size={16} strokeWidth={2} />
+      </button>
+    </div>
+  )
+}
 
 export default function App() {
   const [screen, setScreen] = useState('setup') // setup | review | final
@@ -88,6 +124,7 @@ export default function App() {
             <Settings2 size={20} />
           </button>
         </div>
+        <WindowControls />
       </header>
 
       <main className="app-main">

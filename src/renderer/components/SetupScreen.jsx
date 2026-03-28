@@ -625,10 +625,10 @@ export default function SetupScreen({ settings, onComplete }) {
 
         <div className="tab-bar">
           <button className={`tab-btn ${activeTab === 'folder' ? 'active' : ''}`} onClick={() => setActiveTab('folder')}>
-            Open Folder
+            <Folder size={14} style={{verticalAlign:'middle', marginRight:6}} />Open Folder
           </button>
           <button className={`tab-btn ${activeTab === 'import' ? 'active' : ''}`} onClick={() => setActiveTab('import')}>
-            Import from Phone
+            <Smartphone size={14} style={{verticalAlign:'middle', marginRight:6}} />Import from Phone
           </button>
         </div>
 

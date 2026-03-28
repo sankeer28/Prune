@@ -4,7 +4,6 @@ const fs = require('fs')
 const os = require('os')
 const { spawn } = require('child_process')
 
-// appium-ios-device is CJS — require() is fully ASAR-patched; import() is not
 let _afc = null
 try { _afc = require('appium-ios-device') } catch (e) { console.error('appium-ios-device load failed:', e.message) }
 const getAfc = () => _afc

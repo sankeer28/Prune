@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "appium-ios-device": "^3.1.10",
+    "archiver-utils": "^5.0.2",
     "electron-store": "^10.0.0",
     "framer-motion": "^12.4.7",
     "heic-convert": "^2.1.0",
@@ -37,6 +38,7 @@
   "build": {
     "appId": "com.prune.app",
     "productName": "Prune",
+    "asar": true,
     "icon": "assets/icon",
     "files": [
       "dist/**/*",
@@ -46,13 +48,32 @@
     "asarUnpack": [
       "**/*.node",
       "node_modules/sharp/**/*",
-      "node_modules/@img/**/*",
-      "node_modules/appium-ios-device/**/*",
-      "node_modules/node-usbmux/**/*"
+      "node_modules/@img/**/*"
     ],
     "win": {
-      "target": "nsis",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "portable": {
+      "artifactName": "Prune-Portable-${version}.exe"
     },
     "mac": {
       "target": "dmg"

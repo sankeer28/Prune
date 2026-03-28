@@ -1,7 +1,7 @@
-# Prune
 
-AI-powered photo culling desktop app. Connect your phone or select a folder, let the AI sort the keepers from the junk, then review and delete in one pass.
-
+<p align="center">
+  <img width="908" height="235" alt="image" src="https://github.com/user-attachments/assets/f89b7c75-32c5-490a-aeef-6a4f351d8fd7" />
+</p>
 ## Features
 
 - **AI analysis** via local [Ollama](https://ollama.com) — no cloud, no uploads

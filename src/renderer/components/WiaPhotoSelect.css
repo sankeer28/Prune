@@ -99,7 +99,6 @@
   position: relative;
   background: var(--bg3);
   border: 2px solid transparent;
-  border-radius: 8px;
   cursor: pointer;
   display: flex;
   flex-direction: column;

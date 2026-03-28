@@ -44,6 +44,7 @@
   width: 18px;
   height: 18px;
   display: block;
+  transform: rotate(12deg);
 }
 
 .app-breadcrumb {

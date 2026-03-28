@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { analyzePhoto } from '../../utils/analyzePhoto.js'
 import WiaPhotoSelect from './WiaPhotoSelect.jsx'
 import { Smartphone, HardDrive, AlertTriangle, Camera, Check, Folder, RefreshCw, ArrowRight, Image as ImageIcon, LayoutGrid, Expand, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react'
+import iconUrl from '../../../assets/icon.svg'
 import './SetupScreen.css'
 
 function formatBytes(bytes) {
@@ -590,6 +591,7 @@ export default function SetupScreen({ settings, onComplete }) {
     <div className="setup">
       <div className={`setup-center ${needsSpace ? '' : 'is-centered'}`}>
         <h1 className="setup-title">
+          <img src={iconUrl} alt="" className="setup-title-icon" />
           Prune
         </h1>
         <p className="setup-subtitle">AI-powered photo culling. Keep the best, delete the rest.</p>
